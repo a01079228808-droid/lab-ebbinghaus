@@ -1,0 +1,1065 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>에빙하우스 착시 실험실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 실험 장비 패널. 한 화면에 한 단계, 상단 진행 표시줄, 자극은 테마와 무관한 고정 회색 패널 위에 그린다. */
+:root{
+  --bg:#eef1f3; --panel:#ffffff; --ink:#17202b; --muted:#5b6672; --line:#d5dbe1;
+  --accent:#0d6e6a; --accent-ink:#ffffff; --accent-soft:#d6ecea;
+  --warn:#a65c00; --warn-soft:#fbecd6; --bad:#b3261e; --bad-soft:#f8dedb; --good:#2d7a3a;
+  --pos:#0d6e6a; --neg:#b86a00;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --panel:#1b222a; --ink:#e6ebf0; --muted:#9aa6b2; --line:#2e3843;
+  --accent:#4fb8b1; --accent-ink:#0b1416; --accent-soft:#183634;
+  --warn:#f0a94a; --warn-soft:#3a2b14; --bad:#ff8a80; --bad-soft:#3d1d1b; --good:#7fd08a;
+  --pos:#4fb8b1; --neg:#f0a94a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --panel:#1b222a; --ink:#e6ebf0; --muted:#9aa6b2; --line:#2e3843;
+  --accent:#4fb8b1; --accent-ink:#0b1416; --accent-soft:#183634;
+  --warn:#f0a94a; --warn-soft:#3a2b14; --bad:#ff8a80; --bad-soft:#3d1d1b; --good:#7fd08a;
+  --pos:#4fb8b1; --neg:#f0a94a; color-scheme:dark}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:12px 48px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-block:8px 14px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.brand{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 420px}
+.brand h1{font-size:18px;line-height:1.4;margin:0;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.brand .team{font-size:13.5px;font-weight:500;color:var(--accent)}
+nav.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px}
+nav.tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:14px;padding:6px 14px;border-radius:999px;cursor:pointer}
+nav.tabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.progress{display:flex;gap:4px;margin-bottom:16px}
+.progress span{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.progress span.on{background:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.stack{display:flex;flex-direction:column;gap:16px}
+h2{font-size:20px;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h3{font-size:16px;margin:0}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weight:500;min-width:0}
+label.f .hint{font-weight:400;color:var(--muted);font-size:12.5px}
+input[type=text],input[type=number],select,textarea{font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+textarea{font-family:var(--f-mono);font-size:12px;min-height:110px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row.end{justify-content:flex-end}
+.btn{font:inherit;font-size:15px;font-weight:500;border-radius:8px;padding:10px 18px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.big{padding:14px 22px;font-size:16px}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 8px 8px 0;font-size:14px}
+.note.warn{border-color:var(--warn);background:var(--warn-soft)}
+.note.bad{border-color:var(--bad);background:var(--bad-soft)}
+ol.steps,ul.plain{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.stimbox{background:#cfcfcf;border-radius:8px;overflow:hidden;display:flex;justify-content:center;touch-action:manipulation;max-width:100%}
+.stimbox canvas{display:block;max-width:100%}
+.likert{display:flex;flex-direction:column;gap:10px}
+.likert .q{display:grid;grid-template-columns:1fr;gap:6px;padding-block:10px;border-bottom:1px solid var(--line)}
+.likert .opts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.likert .opts label{border:1px solid var(--line);border-radius:8px;padding:7px 4px;text-align:center;font-size:13px;cursor:pointer;background:var(--bg)}
+.likert .opts input{position:absolute;opacity:0;pointer-events:none}
+.likert .opts label:has(input:checked){background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.likert .opts label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13.5px;cursor:pointer;background:var(--bg)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.creditcard{border:2px dashed var(--accent);border-radius:12px;background:var(--accent-soft);display:flex;align-items:flex-end;justify-content:flex-start;padding:8px;font-size:12px;color:var(--muted);max-width:100%}
+.adjust{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+input[type=range]{width:100%;accent-color:var(--accent);height:32px}
+.counter{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.stat{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--bg);display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat b{font-family:var(--f-mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--muted)}
+.tablewrap{overflow-x:auto;max-width:100%}
+table.data{border-collapse:collapse;font-size:13px;width:100%}
+table.data th,table.data td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+table.data td.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+table.heat{border-collapse:separate;border-spacing:4px;font-size:13px}
+table.heat th{font-weight:500;color:var(--muted);padding:4px 6px;text-align:center}
+table.heat td{width:110px;height:64px;text-align:center;border-radius:6px;font-family:var(--f-mono);font-variant-numeric:tabular-nums;border:1px solid var(--line)}
+table.heat td small{display:block;font-size:11px;opacity:.8}
+.pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}
+.pill.ok{color:var(--good);border-color:var(--good)}
+.pill.warn{color:var(--warn);border-color:var(--warn)}
+.pill.bad{color:var(--bad);border-color:var(--bad)}
+svg.chart{width:100%;height:auto;max-width:560px}
+svg.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:11px}
+.fix-note{font-size:13px;color:var(--muted);text-align:center}
+.respbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.respbtns .btn{padding:16px 10px}
+details summary{cursor:pointer;font-weight:500}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>에빙하우스 착시를 활용한 청소년 숏폼 및 모바일 게임 과의존의 측정과 제어 방법 연구</h1><span class="team">첨단고등학교 레번</span></div>
+    <nav class="tabs" aria-label="화면 선택">
+      <button id="tabRun" aria-pressed="true">참여하기</button>
+      <button id="tabRes" aria-pressed="false">연구자 화면</button>
+    </nav>
+  </header>
+
+  <main id="runView">
+    <div class="progress" id="progress" aria-hidden="true"></div>
+
+    <!-- 0. 안내·동의 -->
+    <section class="card stack" data-step="consent">
+      <div class="eyebrow">시작 전 안내</div>
+      <h2>가운데 원의 크기를 맞추는 10~13분짜리 지각 실험입니다</h2>
+      <div class="stimbox"><canvas id="previewCv" aria-label="에빙하우스 착시 예시: 같은 크기의 가운데 원이 작은 원에 둘러싸이면 커 보이고 큰 원에 둘러싸이면 작아 보인다"></canvas></div>
+      <p class="muted small">위 두 그림의 가운데 원은 실제로 같은 크기입니다. 이 실험은 주변 원의 크기(r)와 거리(d), 시야 위치에 따라 착시가 얼마나 달라지는지 측정하고, 스마트폰 사용 습관과의 관계를 함께 살펴봅니다.</p>
+      <ol class="steps">
+        <li>짧은 설문: 학년, 스스로 생각하는 숏폼·게임 사용 시간</li>
+        <li>화면 보정: 카드 크기 맞추기, 눈과 화면 사이 거리 재기</li>
+        <li>과제 A: 원 크기 맞추기 (조건별 반복)</li>
+        <li>과제 B: 가운데 점을 보면서 잠깐 나타나는 원 비교하기</li>
+        <li>스크린타임 기록 확인, 스마트폰 사용 습관 10문항</li>
+      </ol>
+      <div class="note small">
+        이름·전화번호는 받지 않습니다. 참여자 코드로만 기록되고, 기록은 연구 분석에만 쓰입니다. 언제든 그만둘 수 있으며 그만두면 기록은 저장되지 않습니다. 만 14세 미만이거나 학교·학원 실험으로 참여하는 경우 보호자 동의서를 먼저 제출해 주세요.
+      </div>
+      <label class="row small" for="consentChk"><input type="checkbox" id="consentChk"> 위 내용을 읽었고 실험 참여에 동의합니다.</label>
+      <div class="row end"><button class="btn primary big" id="btnStart" disabled>동의하고 시작</button></div>
+    </section>
+
+    <!-- 1. 기본 정보 + 자기보고 -->
+    <section class="card stack" data-step="profile" hidden>
+      <div class="eyebrow">1단계 · 기본 정보와 자기 보고</div>
+      <h2>스크린타임을 보기 전에, 기억나는 대로 적어 주세요</h2>
+      <p class="muted small">정답이 없는 질문입니다. 휴대폰 설정 화면을 열지 말고 평소 느낌대로 적는 것이 이 연구에서 중요합니다.</p>
+      <div class="grid2">
+        <label class="f" for="pCode">참여자 코드<span class="hint">영문·숫자 4~12자. 사전·사후 측정 때 같은 코드를 쓰세요. 이름은 쓰지 마세요.</span><input type="text" id="pCode" maxlength="12" autocomplete="off" placeholder="예: K7Q2"></label>
+        <label class="f" for="pGrade">학년<select id="pGrade"><option value="">선택</option><option>중1</option><option>중2</option><option>중3</option><option>고1</option><option>고2</option><option>고3</option><option>기타</option></select></label>
+        <label class="f" for="pSex">성별<select id="pSex"><option value="">선택</option><option value="M">남</option><option value="F">여</option><option value="NA">응답하지 않음</option></select></label>
+        <label class="f" for="pVision">시력<select id="pVision"><option value="">선택</option><option value="ok">교정 없이 잘 보임</option><option value="corrected">안경·렌즈 착용 중</option><option value="uncorrected">교정이 필요하지만 지금 미착용</option></select></label>
+        <label class="f" for="pDevice">지금 쓰는 기기<select id="pDevice"><option value="">선택</option><option value="laptop">노트북</option><option value="desktop">데스크톱 모니터</option><option value="tablet">태블릿</option><option value="phone">휴대폰(가로 방향)</option></select></label>
+        <label class="f" for="pMode">측정 방식<select id="pMode"><option value="full">전체 측정 (과제 A 전체 + 과제 B)</option><option value="fullA">과제 A 전체만</option><option value="quick">빠른 측정 (사전·사후용, 약 2분)</option></select></label>
+        <label class="f" for="pPhase">측정 회차<select id="pPhase"><option value="single">단독 측정</option><option value="pre">사전 측정 (활동 전)</option><option value="post">사후 측정 (활동 직후)</option><option value="retest">재검사 (1~2주 후)</option></select></label>
+        <label class="f" for="pCond">직전 10분 활동<span class="hint">사전·사후 실험에서만 고르세요</span><select id="pCond"><option value="none">해당 없음</option><option value="shortform">숏폼 시청</option><option value="game">모바일 게임</option><option value="reading">종이책 읽기</option><option value="nature">자연 영상(느린 장면)</option></select></label>
+      </div>
+      <div class="grid3">
+        <label class="f" for="sShort">숏폼 하루 평균<span class="hint">분 (릴스·쇼츠·틱톡)</span><input type="number" id="sShort" min="0" max="1440" inputmode="numeric"></label>
+        <label class="f" for="sGame">모바일 게임 하루 평균<span class="hint">분</span><input type="number" id="sGame" min="0" max="1440" inputmode="numeric"></label>
+        <label class="f" for="sPhone">스마트폰 전체 하루 평균<span class="hint">분</span><input type="number" id="sPhone" min="0" max="1440" inputmode="numeric"></label>
+        <label class="f" for="sSleep">어젯밤 잠잔 시간<span class="hint">시간</span><input type="number" id="sSleep" min="0" max="16" step="0.5" inputmode="decimal"></label>
+        <label class="f" for="sRecent">측정 전 1시간 동안 폰 사용<span class="hint">분</span><input type="number" id="sRecent" min="0" max="60" inputmode="numeric"></label>
+      </div>
+      <div class="stack">
+        <span class="small" style="font-weight:500">숏폼을 본 직후 집중력은 어떤가요?</span>
+        <div class="seg" role="radiogroup" aria-label="숏폼 시청 후 집중력">
+          <label><input type="radio" name="sFocus" value="1">매우 흐려진다</label>
+          <label><input type="radio" name="sFocus" value="2">다소 흐려진다</label>
+          <label><input type="radio" name="sFocus" value="3">변화 없다</label>
+          <label><input type="radio" name="sFocus" value="4">다소 좋아진다</label>
+          <label><input type="radio" name="sFocus" value="5">매우 좋아진다</label>
+        </div>
+      </div>
+      <p class="small" id="profileErr" role="alert" style="color:var(--bad)"></p>
+      <div class="row end"><button class="btn primary" id="btnProfile">다음: 화면 보정</button></div>
+    </section>
+
+    <!-- 2. 카드 보정 -->
+    <section class="card stack" data-step="card" hidden>
+      <div class="eyebrow">2단계 · 화면 크기 보정</div>
+      <h2>신용카드·학생증을 화면에 대고 점선 상자 너비를 맞추세요</h2>
+      <p class="muted small">ISO 규격 카드(가로 85.60 mm)를 기준으로 화면의 1 mm가 몇 픽셀인지 계산합니다. 화면 확대·축소 배율은 100%로 두세요.</p>
+      <div id="cardHolder" style="overflow:hidden"><div class="creditcard" id="cardBox">카드 왼쪽 위 모서리를 상자 왼쪽 위에 맞추세요</div></div>
+      <div class="adjust">
+        <button class="btn" id="cardMinus" aria-label="작게">−</button>
+        <input type="range" id="cardSlider" min="120" max="900" step="0.5" value="323" aria-label="카드 상자 너비">
+        <button class="btn" id="cardPlus" aria-label="크게">+</button>
+      </div>
+      <p class="counter" id="cardInfo"></p>
+      <div class="row end"><button class="btn primary" id="btnCard">카드와 너비가 같아요</button></div>
+    </section>
+
+    <!-- 3. 거리 보정 -->
+    <section class="card stack" data-step="dist" hidden>
+      <div class="eyebrow">3단계 · 눈과 화면 사이 거리</div>
+      <h2>맹점 찾기로 시청 거리를 잽니다</h2>
+      <ol class="steps small">
+        <li>평소 실험할 자세로 앉고, 이후 과제가 끝날 때까지 머리 위치를 유지하세요.</li>
+        <li><b>오른쪽 눈을 감고</b> 왼쪽 눈으로 오른쪽의 검은 사각형만 계속 보세요.</li>
+        <li>빨간 점이 왼쪽으로 움직이다가 <b>사라지는 순간</b> “사라졌다” 버튼(또는 스페이스바)을 누르세요. 5번 반복합니다.</li>
+      </ol>
+      <div class="stimbox" style="background:#ffffff"><canvas id="blindCv" aria-label="맹점 측정 화면"></canvas></div>
+      <div class="row">
+        <button class="btn primary big" id="btnBlindGo">측정 시작</button>
+        <button class="btn big" id="btnBlindHit" disabled>사라졌다</button>
+        <span class="counter" id="blindInfo">0 / 5</span>
+      </div>
+      <details>
+        <summary class="small">화면 폭이 좁아 측정이 안 되나요? 줄자로 직접 입력</summary>
+        <div class="row" style="margin-top:10px">
+          <label class="f" for="distManual" style="max-width:220px">눈–화면 거리 (cm)<input type="number" id="distManual" min="20" max="150" step="1" placeholder="예: 50"></label>
+          <button class="btn" id="btnDistManual">이 값으로 진행</button>
+        </div>
+      </details>
+      <p class="small" id="distMsg" role="status"></p>
+      <div class="row end"><button class="btn primary" id="btnDist" disabled>다음: 과제 A</button></div>
+    </section>
+
+    <!-- 4. 과제 A 안내 -->
+    <section class="card stack" data-step="aIntro" hidden>
+      <div class="eyebrow">과제 A · 크기 맞추기</div>
+      <h2>한쪽의 가운데 원과 같은 크기가 되도록 반대쪽 원을 조절하세요</h2>
+      <ul class="plain small">
+        <li>둘러싼 원은 무시하고 <b>가운데 원</b>만 비교하세요. 눈은 자유롭게 움직여도 됩니다.</li>
+        <li>슬라이더, −/+ 버튼, 키보드 방향키로 조절합니다. 시작 크기는 매번 다릅니다.</li>
+        <li>너무 오래 고민하지 말고 같아 보이는 순간 “같아 보여요”를 누르세요.</li>
+      </ul>
+      <p class="counter" id="aPlanInfo"></p>
+      <div class="row end"><button class="btn primary big" id="btnAGo">과제 A 시작</button></div>
+    </section>
+
+    <!-- 5. 과제 A -->
+    <section class="card stack" data-step="aTask" hidden>
+      <div class="row" style="justify-content:space-between"><span class="eyebrow">과제 A</span><span class="counter" id="aCount"></span></div>
+      <div class="stimbox"><canvas id="aCv" aria-label="크기 맞추기 자극"></canvas></div>
+      <div class="adjust">
+        <button class="btn" id="aMinus" aria-label="비교 원 작게">−</button>
+        <input type="range" id="aSlider" min="0" max="1000" step="1" value="500" aria-label="비교 원 크기">
+        <button class="btn" id="aPlus" aria-label="비교 원 크게">+</button>
+      </div>
+      <div class="row end"><button class="btn primary big" id="aOk">같아 보여요</button></div>
+    </section>
+
+    <!-- 6. 과제 B 안내 -->
+    <section class="card stack" data-step="bIntro" hidden>
+      <div class="eyebrow">과제 B · 주변 시야 비교</div>
+      <h2>가운데 + 표시를 계속 보세요. 양옆에 0.2초 동안 원이 나타납니다</h2>
+      <ul class="plain small">
+        <li>이제 두 눈을 모두 뜨세요. 눈동자를 옆으로 돌리지 말고 + 표시만 봅니다.</li>
+        <li>사라진 뒤 <b>어느 쪽 가운데 원이 더 컸는지</b> 고르세요. 확실하지 않아도 더 그럴듯한 쪽을 고르면 됩니다.</li>
+        <li>키보드: ← / → (화면이 위아래 배치면 ↑ / ↓)</li>
+      </ul>
+      <p class="counter" id="bPlanInfo"></p>
+      <div class="row end"><button class="btn primary big" id="btnBGo">과제 B 시작</button></div>
+    </section>
+
+    <!-- 7. 과제 B -->
+    <section class="card stack" data-step="bTask" hidden>
+      <div class="row" style="justify-content:space-between"><span class="eyebrow">과제 B</span><span class="counter" id="bCount"></span></div>
+      <div class="stimbox"><canvas id="bCv" aria-label="주변 시야 비교 자극"></canvas></div>
+      <div class="respbtns" id="bResp">
+        <button class="btn big" id="bLeft" disabled>왼쪽이 더 컸다</button>
+        <button class="btn big" id="bRight" disabled>오른쪽이 더 컸다</button>
+      </div>
+    </section>
+
+    <!-- 8. 실제 기록 -->
+    <section class="card stack" data-step="logs" hidden>
+      <div class="eyebrow">4단계 · 실제 사용 기록</div>
+      <h2>이제 휴대폰의 스크린타임 기록을 열어 지난 7일 일평균을 옮겨 적으세요</h2>
+      <div class="note small">
+        아이폰: 설정 → 스크린 타임 → 모든 활동 보기 → ‘주’ 탭의 일일 평균<br>
+        안드로이드: 설정 → 디지털 웰빙 및 자녀 보호 기능 → 대시보드(최근 7일 평균)<br>
+        캡처 이미지는 받지 않습니다. 숫자만 분 단위로 입력하세요.
+      </div>
+      <label class="row small" for="lNone"><input type="checkbox" id="lNone"> 기록 기능이 꺼져 있거나 확인할 수 없어요</label>
+      <div class="grid3" id="logFields">
+        <label class="f" for="lTotal">전체 화면 시간<span class="hint">분/일</span><input type="number" id="lTotal" min="0" max="1440" inputmode="numeric"></label>
+        <label class="f" for="lInsta">인스타그램<span class="hint">분/일</span><input type="number" id="lInsta" min="0" max="1440" inputmode="numeric"></label>
+        <label class="f" for="lYoutube">유튜브<span class="hint">분/일 (긴 영상 포함)</span><input type="number" id="lYoutube" min="0" max="1440" inputmode="numeric"></label>
+        <label class="f" for="lTiktok">틱톡<span class="hint">분/일</span><input type="number" id="lTiktok" min="0" max="1440" inputmode="numeric"></label>
+        <label class="f" for="lGames">게임 앱 합계<span class="hint">분/일</span><input type="number" id="lGames" min="0" max="1440" inputmode="numeric"></label>
+        <label class="f" for="lShortsPct">유튜브 중 쇼츠 비율 추정<span class="hint">% (모르면 비워 두기)</span><input type="number" id="lShortsPct" min="0" max="100" inputmode="numeric"></label>
+        <label class="f" for="lOS">휴대폰 운영체제<select id="lOS"><option value="">선택</option><option value="ios">iOS</option><option value="android">Android</option></select></label>
+        <label class="f" for="lNight">야간 모드(블루라이트 필터)<select id="lNight"><option value="">선택</option><option value="always">항상 켬</option><option value="evening">저녁에 자동</option><option value="off">안 씀</option></select></label>
+      </div>
+      <div class="row end"><button class="btn primary" id="btnLogs">다음: 사용 습관 10문항</button></div>
+    </section>
+
+    <!-- 9. 과의존 척도 -->
+    <section class="card stack" data-step="scale" hidden>
+      <div class="eyebrow">5단계 · 스마트폰 사용 습관</div>
+      <h2>최근 한 달을 떠올리며 가장 가까운 답을 고르세요</h2>
+      <p class="muted small">한국지능정보사회진흥원(NIA) 스마트폰 과의존 척도(청소년 자기보고용 10문항, 4점 척도)의 구성을 따릅니다.</p>
+      <div class="likert" id="likert"></div>
+      <p class="small" id="scaleErr" role="alert" style="color:var(--bad)"></p>
+      <div class="row end"><button class="btn primary big" id="btnScale">결과 보기</button></div>
+    </section>
+
+    <!-- 10. 결과 -->
+    <section class="card stack" data-step="result" hidden>
+      <div class="eyebrow">측정 완료</div>
+      <h2>참여해 주셔서 고맙습니다</h2>
+      <p class="small" id="saveStatus" role="status"></p>
+      <div id="resultBody" class="stack"></div>
+      <details>
+        <summary class="small">결과 코드 (연구자가 요청할 때만 제출)</summary>
+        <p class="muted small" style="margin-top:8px">공유 저장소에 연결되지 않은 화면에서 참여했다면, 이 코드를 연구자가 안내한 설문지에 붙여 넣어 주세요.</p>
+        <textarea id="resultCode" readonly aria-label="결과 코드"></textarea>
+        <div class="row" style="margin-top:8px"><button class="btn" id="btnCopyCode">코드 복사</button></div>
+      </details>
+      <div class="row end"><button class="btn" id="btnAgain">다음 참여자 시작</button></div>
+    </section>
+  </main>
+
+  <!-- 연구자 화면 -->
+  <main id="resView" hidden>
+    <div class="stack">
+      <div class="card stack">
+        <div class="row" style="justify-content:space-between">
+          <div class="stack" style="gap:4px"><span class="eyebrow">데이터</span><h2 id="rTitle">누적 기록</h2></div>
+          <span class="pill" id="rSource">저장소 확인 중</span>
+        </div>
+        <p class="small muted" id="rGate"></p>
+        <div class="grid3" id="rStats"></div>
+        <div class="row">
+          <label class="f" for="rFilter" style="max-width:240px">분석 대상<select id="rFilter"><option value="all">전체 회차</option><option value="single">단독 측정만</option><option value="pre">사전 측정만</option><option value="post">사후 측정만</option><option value="retest">재검사만</option></select></label>
+          <label class="row small" for="rQuality"><input type="checkbox" id="rQuality" checked> 품질 경고(보정 이상·통제 조건 이탈) 세션 제외</label>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <span class="eyebrow">탐구 1 · 착시량 = f(r, d)</span>
+        <h3>유도원 크기 × 간격별 평균 착시량 (과제 A)</h3>
+        <p class="small muted">값 = (조건 일치 반지름 ÷ 통제 일치 반지름 − 1) × 100%. 양수는 가운데 원이 커 보인 것, 음수는 작아 보인 것.</p>
+        <div class="tablewrap" id="rHeat"></div>
+        <div id="rModel" class="small"></div>
+      </div>
+
+      <div class="card stack">
+        <span class="eyebrow">탐구 1-2 · 피질 확대 인자</span>
+        <h3>시야 중심 거리(이심률)에 따른 착시량 (과제 B)</h3>
+        <div id="rEcc" class="small"></div>
+      </div>
+
+      <div class="card stack">
+        <span class="eyebrow">탐구 2 · 자기보고 vs 실제 기록</span>
+        <h3>내가 말한 숏폼 시간과 기록된 시간</h3>
+        <div class="grid2"><div id="rScatter1" style="min-width:0"></div><div id="rDisc" class="small" style="min-width:0"></div></div>
+      </div>
+
+      <div class="card stack">
+        <span class="eyebrow">탐구 2-3 · 관계 탐색</span>
+        <h3>과의존 점수, 불일치, 착시량의 상관</h3>
+        <div class="grid2"><div id="rScatter2" style="min-width:0"></div><div id="rCorr" class="small" style="min-width:0"></div></div>
+      </div>
+
+      <div class="card stack">
+        <span class="eyebrow">탐구 3 · 사전–사후 교차 실험</span>
+        <h3>직전 10분 활동에 따른 착시량 변화</h3>
+        <div id="rPrePost" class="small"></div>
+      </div>
+
+      <div class="card stack">
+        <span class="eyebrow">내보내기 · 가져오기</span>
+        <div class="row">
+          <button class="btn" id="exSessions">세션 요약 CSV</button>
+          <button class="btn" id="exA">과제 A 시행 CSV</button>
+          <button class="btn" id="exB">과제 B 시행 CSV</button>
+          <button class="btn" id="exJson">전체 JSON</button>
+        </div>
+        <textarea id="exOut" readonly hidden aria-label="내보내기 내용"></textarea>
+        <p class="small muted" id="exMsg"></p>
+        <div class="row" id="sheetRow">
+          <label class="f" for="sheetKey" style="max-width:260px">구글 시트 연구자 키<input type="text" id="sheetKey" autocomplete="off" placeholder="Apps Script에 정한 키"></label>
+          <button class="btn" id="btnSheet">구글 시트에서 불러오기</button><span class="small" id="sheetMsg"></span>
+        </div>
+        <label class="f" for="imIn">결과 코드 가져오기<span class="hint">참여자가 제출한 결과 코드를 한 줄에 하나씩 붙여 넣으세요</span><textarea id="imIn"></textarea></label>
+        <div class="row"><button class="btn" id="btnImport">가져오기</button><span class="small" id="imMsg"></span></div>
+      </div>
+
+      <div class="card stack">
+        <span class="eyebrow">세션 목록</span>
+        <div class="tablewrap" id="rList"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ===== 상수: 자극 기하 (시각도, °) ===== */
+const RT = 0.6;                 // 표적(가운데 원) 반지름
+const KS = [0.4, 0.8, 1.4];     // 유도원 반지름 / 표적 반지름 (6개가 겹치지 않으려면 k < 1 + g/0.6)
+const GS = [0.3, 0.7, 1.4];     // 표적 가장자리–유도원 가장자리 간격
+const N_IND = 6;                // 유도원 개수
+const BLIND_DEG = 13.5;         // 맹점 이심률 (virtual chinrest)
+const ECCS = [2, 5];            // 과제 B 이심률
+const B_K = 0.4, B_G = 0.12;    // 과제 B 착시 배치
+const STIM_MS = 200;
+const PANEL = '#cfcfcf', DISC = '#141414';
+const LS_KEY = 'ebbLab.sessions.v1';
+/* 구글 시트 저장: Apps Script 웹 앱 주소를 따옴표 안에 붙여 넣으세요. 비워 두면 이 기기와 결과 코드로만 저장됩니다. */
+const SHEET_URL = '';
+const cortX = E => 17.3*Math.log(1+E/0.75);           // Horton & Hoyt(1991) 적분형, mm
+const cortGap = (E0,g) => cortX(E0+g) - cortX(E0);     // 표적 가장자리에서 유도원 가장자리까지 피질 거리
+const SCALE_Q = [
+ ['조절실패','스마트폰 이용시간을 줄이려 할 때마다 실패한다.'],
+ ['조절실패','스마트폰 이용시간을 조절하는 것이 어렵다.'],
+ ['조절실패','적절한 스마트폰 이용시간을 지키는 것이 어렵다.'],
+ ['현저성','스마트폰이 옆에 있으면 다른 일에 집중하기 어렵다.'],
+ ['현저성','스마트폰 생각이 머리에서 떠나지 않는다.'],
+ ['현저성','스마트폰을 이용하고 싶은 충동을 강하게 느낀다.'],
+ ['문제적 결과','스마트폰 이용 때문에 건강에 문제가 생긴 적이 있다.'],
+ ['문제적 결과','스마트폰 이용 때문에 가족과 심하게 다툰 적이 있다.'],
+ ['문제적 결과','스마트폰 이용 때문에 친구 혹은 동료, 사회적 관계에서 심한 갈등을 경험한 적이 있다.'],
+ ['문제적 결과','스마트폰 때문에 학업 수행에 어려움이 있다.']
+];
+const LIKERT = ['전혀 그렇지 않다','그렇지 않다','그렇다','매우 그렇다'];
+
+/* ===== 유틸 ===== */
+const $ = id => document.getElementById(id);
+const dpr = Math.max(1, window.devicePixelRatio||1);
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const num = v => { const x = parseFloat(v); return Number.isFinite(x) ? x : null; };
+const mean = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : null;
+const median = a => { if(!a.length) return null; const b=[...a].sort((x,y)=>x-y); const m=b.length>>1; return b.length%2?b[m]:(b[m-1]+b[m])/2; };
+const sd = a => { if(a.length<2) return null; const m=mean(a); return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1)); };
+const fmt = (x,d=1) => x==null||!Number.isFinite(x) ? '–' : x.toFixed(d);
+const sgn = (x,d=1) => x==null||!Number.isFinite(x) ? '–' : (x>0?'+':'')+x.toFixed(d);
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function setupCanvas(cv,w,h){ cv.style.width=w+'px'; cv.style.height=h+'px'; cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); return c; }
+function disc(c,x,y,r,col){ c.beginPath(); c.arc(x,y,Math.max(0.5,r),0,Math.PI*2); c.fillStyle=col||DISC; c.fill(); }
+function drawConfig(c,cx,cy,ppd,k,g,withInd){
+  const rt = RT*ppd; disc(c,cx,cy,rt);
+  if(!withInd) return;
+  const ri = k*RT*ppd, d = (RT+g+k*RT)*ppd;
+  for(let i=0;i<N_IND;i++){ const a = i*2*Math.PI/N_IND + Math.PI/6; disc(c,cx+d*Math.cos(a),cy+d*Math.sin(a),ri); }
+}
+const extent = (k,g) => RT+g+2*k*RT;   // 배치의 바깥 반지름(°)
+
+/* ===== 저장소 ===== */
+let DB=null, USER=null, canResearch=true, remote=[], remoteReady=false;
+function loadLocal(){ try{ const t=localStorage.getItem(LS_KEY); return t?JSON.parse(t):[]; }catch(e){ return []; } }
+function saveLocal(list){ try{ localStorage.setItem(LS_KEY, JSON.stringify(list)); return true; }catch(e){ return false; } }
+function addLocal(doc){ const l=loadLocal().filter(d=>d.id!==doc.id); l.push(doc); return saveLocal(l); }
+async function initCaps(){
+  if(!window.claude || !window.claude.use){ setSource(); return; }
+  try{
+    const [db,user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    DB = db; USER = user;
+    if(USER){ try{ const ce = await USER.canEdit(); canResearch = !!ce; }catch(e){} }
+    if(DB){
+      DB.collection('sessions').onSnapshot(snap=>{
+        remote = snap.docs.filter(d=>d.exists).map(d=>d.data());
+        remoteReady = true; setSource(); if(!$('resView').hidden) renderResearch();
+      }, err=>{ remoteReady=false; setSource(err.code); });
+    }
+  }catch(e){}
+  setSource();
+}
+function setSource(errCode){
+  const el=$('rSource');
+  if(DB && remoteReady){ el.textContent='공유 저장소 연결됨'; el.className='pill ok'; }
+  else if(DB){ el.textContent = errCode?('공유 저장소 오류: '+errCode):'공유 저장소 연결 중'; el.className='pill warn'; }
+  else { el.textContent='이 기기에만 저장'; el.className='pill warn'; }
+  $('rGate').textContent = canResearch ? (DB ? '공유 저장소와 이 기기의 기록을 합쳐 보여 줍니다. 참여자 코드 외의 개인정보는 저장하지 않습니다.' : '이 화면은 공유 저장소에 연결되어 있지 않습니다. 이 기기에서 진행한 기록과 가져온 결과 코드만 보입니다.') : '연구자(편집 권한)만 분석 화면을 볼 수 있습니다.';
+}
+function allSessions(){
+  const m=new Map(); [...loadLocal(), ...remote].forEach(d=>{ if(d && d.id) m.set(d.id,d); });
+  return [...m.values()].sort((a,b)=>String(a.createdAt).localeCompare(String(b.createdAt)));
+}
+
+/* ===== 진행 단계 ===== */
+const STEPS = ['consent','profile','card','dist','aIntro','aTask','bIntro','bTask','logs','scale','result'];
+function show(step){
+  document.querySelectorAll('#runView [data-step]').forEach(s=>s.hidden = s.dataset.step!==step);
+  const i = STEPS.indexOf(step); const pr=$('progress'); pr.innerHTML='';
+  for(let j=0;j<STEPS.length-1;j++){ const sp=document.createElement('span'); if(j<=i) sp.className='on'; pr.appendChild(sp); }
+  window.scrollTo({top:0});
+  current = step;
+}
+let current='consent';
+let S = null;
+function newSession(){
+  S = { id: uid(), v:1, consent:true, createdAt:new Date().toISOString(), localTime:new Date().toString(),
+        ua:navigator.userAgent, screen:{w:screen.width,h:screen.height,dpr:dpr,vw:innerWidth,vh:innerHeight},
+        calib:{}, taskA:{trials:[]}, taskB:{trials:[], ran:false}, flags:[] };
+}
+
+/* ===== 미리보기 ===== */
+function drawPreview(){
+  const box=$('previewCv').parentElement; const w=Math.min(box.clientWidth||600,640); const h=Math.round(w*0.42);
+  const c=setupCanvas($('previewCv'),w,h); c.fillStyle=PANEL; c.fillRect(0,0,w,h);
+  const ppd = h/8.6;
+  drawConfig(c,w*0.27,h/2,ppd,0.4,0.12,true);
+  drawConfig(c,w*0.73,h/2,ppd,1.6,0.48,true);
+}
+
+/* ===== 0~1 단계 ===== */
+$('consentChk').addEventListener('change',e=>$('btnStart').disabled=!e.target.checked);
+$('btnStart').addEventListener('click',()=>{ newSession(); show('profile'); });
+$('btnProfile').addEventListener('click',()=>{
+  const code=$('pCode').value.trim();
+  const err=[];
+  if(!/^[A-Za-z0-9]{4,12}$/.test(code)) err.push('참여자 코드는 영문·숫자 4~12자로 적어 주세요.');
+  if(!$('pGrade').value) err.push('학년을 골라 주세요.');
+  if(!$('pDevice').value) err.push('기기를 골라 주세요.');
+  if(num($('sShort').value)==null) err.push('숏폼 시간을 숫자로 적어 주세요(안 보면 0).');
+  if(err.length){ $('profileErr').textContent=err.join(' '); return; }
+  $('profileErr').textContent='';
+  const f=document.querySelector('input[name=sFocus]:checked');
+  Object.assign(S,{ code:code.toUpperCase(), grade:$('pGrade').value, sex:$('pSex').value, vision:$('pVision').value,
+    device:$('pDevice').value, mode:$('pMode').value, phase:$('pPhase').value, condition:$('pCond').value });
+  S.self = { shortMin:num($('sShort').value), gameMin:num($('sGame').value), phoneMin:num($('sPhone').value),
+    sleepH:num($('sSleep').value), recentMin:num($('sRecent').value), focus:f?+f.value:null };
+  if(S.vision==='uncorrected') S.flags.push('시력 미교정');
+  show('card'); sizeCard();
+});
+
+/* ===== 2. 카드 보정 ===== */
+function sizeCard(){
+  const maxW = Math.max(160, $('cardHolder').clientWidth);
+  const sl=$('cardSlider'); sl.max = String(Math.min(900, maxW));
+  if(+sl.value>maxW) sl.value=String(maxW);
+  const w=+sl.value; const b=$('cardBox'); b.style.width=w+'px'; b.style.height=(w*53.98/85.6)+'px';
+  $('cardInfo').textContent = `1 mm = ${(w/85.6).toFixed(3)} px  ·  상자 너비 ${w.toFixed(1)} px`;
+}
+$('cardSlider').addEventListener('input',sizeCard);
+$('cardMinus').addEventListener('click',()=>{ $('cardSlider').value=String(+$('cardSlider').value-0.5); sizeCard(); });
+$('cardPlus').addEventListener('click',()=>{ $('cardSlider').value=String(+$('cardSlider').value+0.5); sizeCard(); });
+$('btnCard').addEventListener('click',()=>{ S.calib.pxPerMm = +$('cardSlider').value/85.6; show('dist'); initBlind(); });
+
+/* ===== 3. 거리 보정 (맹점) ===== */
+let blind = {samples:[], running:false, x:0, raf:0, W:0, H:0, fx:0};
+function initBlind(){
+  const w = $('blindCv').parentElement.clientWidth || 600; blind.W=w; blind.H=140; blind.fx = w-40;
+  blind.samples=[]; $('blindInfo').textContent='0 / 5'; drawBlind(null);
+  const needPx = S.calib.pxPerMm * 300*Math.tan(BLIND_DEG*Math.PI/180); // 30 cm에서 필요한 길이
+  $('distMsg').textContent = (blind.fx-20 < needPx) ? '화면 폭이 좁아 맹점 측정이 어려울 수 있습니다. 가로 방향으로 돌리거나 아래 줄자 입력을 쓰세요.' : '';
+}
+function drawBlind(x){
+  const c=setupCanvas($('blindCv'),blind.W,blind.H); c.fillStyle='#ffffff'; c.fillRect(0,0,blind.W,blind.H);
+  c.fillStyle='#000'; c.fillRect(blind.fx-9,blind.H/2-9,18,18);
+  if(x!=null) disc(c,x,blind.H/2,7,'#d11');
+}
+function blindStep(){
+  if(!blind.running) return;
+  const now=performance.now(); const dt=(now-blind.t)/1000; blind.t=now;
+  blind.x -= dt * S.calib.pxPerMm * 22;   // 22 mm/s
+  if(blind.x < 8){ blind.running=false; $('btnBlindHit').disabled=true; $('btnBlindGo').disabled=false; $('distMsg').textContent='점이 끝까지 갔습니다. 오른쪽 눈을 감고 사각형을 보고 있었는지 확인한 뒤 다시 하세요.'; drawBlind(null); return; }
+  drawBlind(blind.x); blind.raf=requestAnimationFrame(blindStep);
+}
+function blindGo(){ if(blind.running||blind.samples.length>=5) return; blind.running=true; blind.x=blind.fx-20; blind.t=performance.now(); $('btnBlindHit').disabled=false; $('btnBlindGo').disabled=true; $('distMsg').textContent=''; blind.raf=requestAnimationFrame(blindStep); }
+function blindHit(){
+  if(!blind.running) return; blind.running=false; cancelAnimationFrame(blind.raf);
+  blind.samples.push(blind.fx-blind.x); drawBlind(null);
+  $('blindInfo').textContent = blind.samples.length+' / 5'; $('btnBlindHit').disabled=true;
+  if(blind.samples.length<5){ $('btnBlindGo').disabled=false; $('btnBlindGo').textContent='다음 측정'; return; }
+  const mmArr = blind.samples.map(p=>p/S.calib.pxPerMm);
+  const mm = median(mmArr); const D = mm/Math.tan(BLIND_DEG*Math.PI/180);
+  const spread = (Math.max(...mmArr)-Math.min(...mmArr))/mm;
+  setDist(D/10,'blindspot',mmArr,spread);
+}
+function setDist(cm,method,samples,spread){
+  S.calib.distCm = +cm.toFixed(1); S.calib.distMethod = method; S.calib.blindMm = samples||null;
+  let msg = `시청 거리 ${S.calib.distCm} cm로 기록했습니다.`;
+  if(cm<30||cm>90){ msg += ' 일반적인 범위(30~90 cm)를 벗어났습니다. 자세를 확인하고 다시 재는 것을 권합니다.'; S.flags.push('시청거리 범위 밖'); }
+  if(spread!=null && spread>0.25){ msg += ' 5번 측정값의 차이가 큽니다.'; S.flags.push('맹점 측정 불안정'); }
+  $('distMsg').textContent = msg; $('btnDist').disabled=false;
+}
+$('btnBlindGo').addEventListener('click',blindGo);
+$('btnBlindHit').addEventListener('click',blindHit);
+$('btnDistManual').addEventListener('click',()=>{ const v=num($('distManual').value); if(v==null||v<20||v>150){ $('distMsg').textContent='20~150 cm 사이 값을 적어 주세요.'; return; } blind.running=false; setDist(v,'tape',null,null); });
+$('btnDist').addEventListener('click',()=>{ prepareA(); show('aIntro'); });
+
+function deg2px(deg){ const Dmm = S.calib.distCm*10; return S.calib.pxPerMm * 2*Dmm*Math.tan(deg*Math.PI/360); }
+
+/* ===== 과제 A ===== */
+let A = {plan:[], i:0, layout:'h', ppd:0, W:0, H:0, scale:1, ratio:1, start:0, t0:0, adj:0, side:0};
+const SL_MIN=0.4, SL_MAX=2.0;
+const r2s = r => Math.round((Math.log(r)-Math.log(SL_MIN))/(Math.log(SL_MAX)-Math.log(SL_MIN))*1000);
+const s2r = s => Math.exp(Math.log(SL_MIN)+s/1000*(Math.log(SL_MAX)-Math.log(SL_MIN)));
+function prepareA(){
+  const conds=[];
+  if(S.mode==='quick'){ [[KS[0],GS[0]],[KS[2],GS[0]],[0,0]].forEach(([k,g])=>{ for(let r=0;r<3;r++) conds.push({k,g,rep:r}); }); }
+  else { KS.forEach(k=>GS.forEach(g=>{ for(let r=0;r<2;r++) conds.push({k,g,rep:r}); })); for(let r=0;r<3;r++) conds.push({k:0,g:0,rep:r}); }
+  A.plan = shuffle(conds); A.i=0;
+  const maxExt = S.mode==='quick' ? extent(KS[2],GS[0]) : extent(KS[2],GS[2]);
+  const regionDeg = 2*(maxExt+0.4);
+  const ppd = deg2px(1); const regionPx = regionDeg*ppd;
+  const W = $('aCv').parentElement.clientWidth || 600; const vh = innerHeight*0.62;
+  let layout='h', scale=1;
+  if(W >= 2*regionPx){ layout='h'; }
+  else if(W >= regionPx && vh >= 2*regionPx){ layout='v'; }
+  else { layout='h'; scale = Math.min(W/(2*regionPx), 1); S.flags.push('과제 A 축소 표시'); }
+  A.layout=layout; A.scale=scale; A.ppd=ppd*scale;
+  A.W = layout==='h' ? Math.min(W, Math.round(2*regionPx*scale)+40) : Math.round(regionPx*scale);
+  A.H = layout==='h' ? Math.round(regionPx*scale) : Math.round(2*regionPx*scale);
+  Object.assign(S.calib,{ppd:+ppd.toFixed(3), scaleA:+scale.toFixed(3), layoutA:layout});
+  $('aPlanInfo').textContent = `${A.plan.length}회 · 1°=${ppd.toFixed(1)} px` + (scale<1?` · 화면이 작아 ${Math.round(scale*100)}%로 축소 표시`:'');
+}
+function centersA(){
+  return A.layout==='h' ? [[A.W*0.25,A.H/2],[A.W*0.75,A.H/2]] : [[A.W/2,A.H*0.25],[A.W/2,A.H*0.75]];
+}
+function drawA(){
+  const t=A.plan[A.i]; const c=setupCanvas($('aCv'),A.W,A.H); c.fillStyle=PANEL; c.fillRect(0,0,A.W,A.H);
+  const [p0,p1]=centersA(); const cfg = A.side===0?p0:p1, cmp = A.side===0?p1:p0;
+  drawConfig(c,cfg[0],cfg[1],A.ppd,t.k,t.g,t.k>0);
+  disc(c,cmp[0],cmp[1],A.ratio*RT*A.ppd);
+}
+function startTrialA(){
+  const t=A.plan[A.i]; A.side = Math.random()<0.5?0:1;
+  A.start = Math.exp(Math.log(0.7)+Math.random()*(Math.log(1.45)-Math.log(0.7))); A.ratio=A.start; A.adj=0;
+  $('aSlider').value=String(r2s(A.ratio)); $('aCount').textContent=`${A.i+1} / ${A.plan.length}`;
+  A.t0=performance.now(); drawA();
+}
+function setRatio(r){ A.ratio=Math.min(SL_MAX,Math.max(SL_MIN,r)); $('aSlider').value=String(r2s(A.ratio)); A.adj++; drawA(); }
+$('btnAGo').addEventListener('click',()=>{ show('aTask'); startTrialA(); });
+$('aSlider').addEventListener('input',e=>{ A.ratio=s2r(+e.target.value); A.adj++; drawA(); });
+$('aMinus').addEventListener('click',()=>setRatio(A.ratio/1.006));
+$('aPlus').addEventListener('click',()=>setRatio(A.ratio*1.006));
+$('aOk').addEventListener('click',finishTrialA);
+function finishTrialA(){
+  const t=A.plan[A.i];
+  S.taskA.trials.push({k:t.k,g:t.g,rep:t.rep,side:A.side,start:+A.start.toFixed(4),ratio:+A.ratio.toFixed(4),rt:Math.round(performance.now()-A.t0),adj:A.adj});
+  A.i++;
+  if(A.i<A.plan.length){ startTrialA(); return; }
+  if(S.mode==='full' && prepareB()) show('bIntro'); else show('logs');
+}
+
+/* ===== 과제 B: 주변시 2AFC 계단법 ===== */
+let B = {sc:[], queue:null, cur:null, layout:'h', ppd:0, W:0, H:0, busy:false, n:0, total:0};
+function prepareB(){
+  const ppd = deg2px(1);
+  const outer = Math.max(...ECCS) + extent(B_K,B_G) + 0.3;
+  const W = $('bCv').parentElement.clientWidth || 600; const vh=innerHeight*0.6;
+  let layout=null;
+  if(W >= 2*outer*ppd) layout='h'; else if(vh >= 2*outer*ppd) layout='v';
+  if(!layout){ S.flags.push('과제 B 생략(화면 부족)'); S.taskB.skipped='screen'; return false; }
+  B.layout=layout; B.ppd=ppd;
+  const span = Math.round(2*outer*ppd), thick = Math.round(2*(extent(B_K,B_G)+0.5)*ppd);
+  B.W = layout==='h'?span:thick; B.H = layout==='h'?thick:span;
+  B.sc=[];
+  ECCS.forEach(E=>{
+    [['ind',10],['ctl',6]].forEach(([cond,n])=>{ [0.8,1.4].forEach(c0=>B.sc.push({E,cond,c:c0,c0,n,done:0,step:1.10,rev:0,last:null})); });
+  });
+  B.total = B.sc.reduce((s,x)=>s+x.n,0); B.n=0;
+  S.taskB.ran=true; S.calib.layoutB=layout;
+  $('bPlanInfo').textContent = `${B.total}회 · 이심률 ${ECCS.join('°, ')}° · 제시 ${STIM_MS} ms`;
+  $('bLeft').textContent = layout==='h'?'왼쪽이 더 컸다':'위쪽이 더 컸다';
+  $('bRight').textContent = layout==='h'?'오른쪽이 더 컸다':'아래쪽이 더 컸다';
+  return true;
+}
+function drawB(stim){
+  const c=setupCanvas($('bCv'),B.W,B.H); c.fillStyle=PANEL; c.fillRect(0,0,B.W,B.H);
+  const cx=B.W/2, cy=B.H/2;
+  if(stim){
+    const off=B.cur.E*B.ppd; const pA = B.layout==='h'?[cx-off,cy]:[cx,cy-off]; const pB = B.layout==='h'?[cx+off,cy]:[cx,cy+off];
+    const cfg = B.cur.side===0?pA:pB, cmp = B.cur.side===0?pB:pA;
+    drawConfig(c,cfg[0],cfg[1],B.ppd,B_K,B_G,B.cur.sc.cond==='ind');
+    disc(c,cmp[0],cmp[1],B.cur.sc.c*RT*B.ppd);
+  }
+  c.strokeStyle='#000'; c.lineWidth=2; c.beginPath(); c.moveTo(cx-7,cy); c.lineTo(cx+7,cy); c.moveTo(cx,cy-7); c.lineTo(cx,cy+7); c.stroke();
+}
+function nextB(){
+  const open = B.sc.filter(s=>s.done<s.n);
+  if(!open.length){ show('logs'); return; }
+  const sc = open[Math.floor(Math.random()*open.length)];
+  B.cur = {sc, E:sc.E, side:Math.random()<0.5?0:1};
+  $('bCount').textContent = `${B.n+1} / ${B.total}`;
+  $('bLeft').disabled=true; $('bRight').disabled=true; B.busy=true;
+  drawB(false);
+  setTimeout(()=>{
+    let t0=null;
+    const on = ts => { if(t0==null){ t0=ts; drawB(true); requestAnimationFrame(on); return; }
+      if(ts-t0 < STIM_MS-8){ requestAnimationFrame(on); return; }
+      drawB(false); B.cur.dur=Math.round(ts-t0); B.cur.tOff=performance.now(); $('bLeft').disabled=false; $('bRight').disabled=false; B.busy=false; };
+    requestAnimationFrame(on);
+  }, 550 + Math.random()*250);
+}
+function respondB(chosenSide){
+  if(B.busy || !B.cur || B.cur.tOff==null) return;
+  const cur=B.cur, sc=cur.sc;
+  const cmpSide = cur.side===0?1:0; const cmpBigger = chosenSide===cmpSide;
+  S.taskB.trials.push({E:cur.E,cond:sc.cond,c0:sc.c0,c:+sc.c.toFixed(4),side:cur.side,resp:chosenSide,cmpBigger:cmpBigger?1:0,dur:cur.dur,rt:Math.round(performance.now()-cur.tOff)});
+  const dir = cmpBigger?-1:1;
+  if(sc.last!=null && dir!==sc.last){ sc.rev++; if(sc.rev===2) sc.step=1.05; if(sc.rev===4) sc.step=1.03; }
+  sc.last=dir; sc.c = Math.min(2.2,Math.max(0.45, dir>0? sc.c*sc.step : sc.c/sc.step)); sc.done++; B.n++;
+  B.cur=null; nextB();
+}
+$('btnBGo').addEventListener('click',()=>{ show('bTask'); nextB(); });
+$('bLeft').addEventListener('click',()=>respondB(0));
+$('bRight').addEventListener('click',()=>respondB(1));
+
+document.addEventListener('keydown',e=>{
+  if(current==='dist' && (e.code==='Space')){ e.preventDefault(); if(blind.running) blindHit(); else if(!$('btnBlindGo').disabled) blindGo(); }
+  if(current==='aTask'){
+    const fine = e.shiftKey?1.02:1.006;
+    if(e.key==='ArrowRight'||e.key==='ArrowUp'){ e.preventDefault(); setRatio(A.ratio*fine); }
+    if(e.key==='ArrowLeft'||e.key==='ArrowDown'){ e.preventDefault(); setRatio(A.ratio/fine); }
+    if(e.key==='Enter'){ e.preventDefault(); finishTrialA(); }
+  }
+  if(current==='bTask'){
+    if((B.layout==='h'&&e.key==='ArrowLeft')||(B.layout==='v'&&e.key==='ArrowUp')){ e.preventDefault(); respondB(0); }
+    if((B.layout==='h'&&e.key==='ArrowRight')||(B.layout==='v'&&e.key==='ArrowDown')){ e.preventDefault(); respondB(1); }
+  }
+});
+
+/* ===== 4. 실제 기록 ===== */
+$('lNone').addEventListener('change',e=>{ $('logFields').querySelectorAll('input').forEach(i=>i.disabled=e.target.checked); });
+$('btnLogs').addEventListener('click',()=>{
+  S.logs = { available: !$('lNone').checked, total:num($('lTotal').value), insta:num($('lInsta').value), youtube:num($('lYoutube').value),
+    tiktok:num($('lTiktok').value), games:num($('lGames').value), shortsPct:num($('lShortsPct').value), os:$('lOS').value, nightMode:$('lNight').value };
+  if($('lNone').checked) Object.assign(S.logs,{total:null,insta:null,youtube:null,tiktok:null,games:null,shortsPct:null});
+  show('scale');
+});
+
+/* ===== 5. 척도 ===== */
+function buildLikert(){
+  const box=$('likert'); box.innerHTML='';
+  SCALE_Q.forEach((q,i)=>{
+    const d=document.createElement('div'); d.className='q';
+    d.innerHTML = `<span class="small"><span class="mono muted">${i+1}.</span> ${esc(q[1])}</span><div class="opts" role="radiogroup" aria-label="${i+1}번 문항">`+
+      LIKERT.map((t,j)=>`<label><input type="radio" name="q${i}" value="${j+1}">${t}</label>`).join('')+`</div>`;
+    box.appendChild(d);
+  });
+}
+$('btnScale').addEventListener('click',()=>{
+  const items = SCALE_Q.map((_,i)=>{ const r=document.querySelector(`input[name=q${i}]:checked`); return r?+r.value:null; });
+  if(items.some(v=>v==null)){ $('scaleErr').textContent='응답하지 않은 문항이 있습니다.'; return; }
+  $('scaleErr').textContent='';
+  const total = items.reduce((s,x)=>s+x,0);
+  S.scale = { items, total, sub:{ctrl:items[0]+items[1]+items[2], sal:items[3]+items[4]+items[5], cons:items[6]+items[7]+items[8]+items[9]},
+    cat: total>=31?'고위험':total>=23?'잠재적위험':'일반' };
+  finish();
+});
+
+/* ===== 분석 함수 (참여자 1명) ===== */
+function logisticPSE(trials){
+  if(trials.length<6) return null;
+  let best={ll:-Infinity,m:0,s:0.1};
+  for(let m=Math.log(0.5); m<=Math.log(2.0); m+=0.004){
+    for(let s=0.02; s<=0.4; s+=0.01){
+      let ll=0; for(const t of trials){ const p=1/(1+Math.exp(-(Math.log(t.c)-m)/s)); const pp=Math.min(1-1e-6,Math.max(1e-6,p)); ll += t.cmpBigger? Math.log(pp):Math.log(1-pp); }
+      if(ll>best.ll) best={ll,m,s};
+    }
+  }
+  return {pse:Math.exp(best.m), slope:best.s};
+}
+function summarize(s){
+  const out={a:{}, b:{}};
+  const tr = s.taskA?.trials||[];
+  const ctl = tr.filter(t=>t.k===0).map(t=>t.ratio);
+  const ctlMed = median(ctl);
+  out.a.control = ctlMed;
+  const conds = {};
+  tr.filter(t=>t.k>0).forEach(t=>{ const key=t.k+'|'+t.g; (conds[key]=conds[key]||[]).push(t.ratio); });
+  out.a.cond = {};
+  Object.entries(conds).forEach(([key,arr])=>{ const m=median(arr); out.a.cond[key] = ctlMed? (m/ctlMed-1)*100 : null; });
+  out.a.expand = out.a.cond[KS[0]+'|'+GS[0]] ?? null;
+  out.a.shrink = out.a.cond[KS[2]+'|'+GS[0]] ?? null;
+  out.a.total = (out.a.expand!=null && out.a.shrink!=null) ? out.a.expand - out.a.shrink : null;
+  const far = KS.map(k=>out.a.cond[k+'|'+GS[2]]).filter(v=>v!=null), near = KS.map(k=>out.a.cond[k+'|'+GS[0]]).filter(v=>v!=null);
+  out.a.distanceEffect = (far.length===3&&near.length===3) ? mean(near.map(Math.abs)) - mean(far.map(Math.abs)) : null;
+  const tb = s.taskB?.trials||[];
+  ECCS.forEach(E=>{
+    const fi = logisticPSE(tb.filter(t=>t.E===E&&t.cond==='ind')); const fc = logisticPSE(tb.filter(t=>t.E===E&&t.cond==='ctl'));
+    // 비교 원이 착시 배치의 표적과 같아 보이는 크기(PSE): 확대 착시가 클수록 PSE_ind가 커진다
+    out.b['E'+E] = (fi&&fc)? {pseInd:fi.pse, pseCtl:fc.pse, illusion:(fi.pse/fc.pse-1)*100} : null;
+  });
+  const L=s.logs||{};
+  const yt = L.youtube!=null ? L.youtube*((L.shortsPct!=null? L.shortsPct:100)/100) : null;
+  out.loggedShort = (L.available && (L.insta!=null||L.tiktok!=null||yt!=null)) ? (L.insta||0)+(L.tiktok||0)+(yt||0) : null;
+  out.selfShort = s.self?.shortMin ?? null;
+  out.disc = (out.loggedShort>0 && out.selfShort>0) ? Math.log2(out.selfShort/out.loggedShort) : null;
+  out.diffMin = (out.loggedShort!=null && out.selfShort!=null) ? out.selfShort-out.loggedShort : null;
+  const grp = m => m==null?null : m<30?'저':m<60?'중':'고';
+  out.selfGroup = grp(out.selfShort); out.logGroup = grp(out.loggedShort);
+  out.gameDiff = (L.games!=null && s.self?.gameMin!=null) ? s.self.gameMin - L.games : null;
+  return out;
+}
+function qualityFlags(s,sum){
+  const f=[...(s.flags||[])];
+  if(sum.a.control!=null && Math.abs(sum.a.control-1)>0.15) f.push('통제 조건 15% 이상 이탈');
+  return [...new Set(f)];
+}
+
+/* ===== 6. 마무리 ===== */
+function b64enc(str){ const bytes=new TextEncoder().encode(str); let bin=''; bytes.forEach(b=>bin+=String.fromCharCode(b)); return btoa(bin); }
+function b64dec(b){ const bin=atob(b); const bytes=new Uint8Array([...bin].map(c=>c.charCodeAt(0))); return new TextDecoder().decode(bytes); }
+async function finish(){
+  S.completedAt = new Date().toISOString();
+  S.summary = summarize(S); S.flags = qualityFlags(S,S.summary);
+  show('result'); renderResult();
+  const okLocal = addLocal(S);
+  const st=$('saveStatus');
+  if(DB){
+    st.textContent='공유 저장소에 저장하는 중…';
+    try{ await DB.collection('sessions').doc(S.id).set(JSON.parse(JSON.stringify(S))); st.textContent='공유 저장소와 이 기기에 저장했습니다.'; }
+    catch(e){
+      if(e && e.code==='unavailable'){ try{ await new Promise(r=>setTimeout(r,800+Math.random()*800)); await DB.collection('sessions').doc(S.id).set(JSON.parse(JSON.stringify(S))); st.textContent='공유 저장소와 이 기기에 저장했습니다.'; return; }catch(e2){} }
+      st.textContent = (okLocal?'이 기기에 저장했습니다. ':'') + '공유 저장소에는 저장하지 못했습니다'+(e&&e.code?` (${e.code})`:'')+'. 아래 결과 코드를 연구자에게 제출해 주세요.';
+    }
+  } else if(SHEET_URL){
+    try{
+      await fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(S)});
+      st.textContent='연구 저장소(구글 시트)로 기록을 보냈고 이 기기에도 저장했습니다. 혹시 모르니 아래 결과 코드도 제출해 주세요.';
+    }catch(e){ st.textContent='인터넷 연결 문제로 연구 저장소에 보내지 못했습니다. 아래 결과 코드를 꼭 제출해 주세요.'; }
+  } else {
+    st.textContent = okLocal ? '이 기기에 저장했습니다. 공유 저장소에 연결되지 않은 화면이므로 아래 결과 코드를 연구자에게 제출해 주세요.' : '이 브라우저는 기록을 저장할 수 없습니다. 아래 결과 코드를 꼭 제출해 주세요.';
+  }
+}
+function compactCode(s){
+  const c = {id:s.id,v:1,createdAt:s.createdAt,code:s.code,grade:s.grade,sex:s.sex,vision:s.vision,device:s.device,mode:s.mode,phase:s.phase,condition:s.condition,
+    self:s.self,logs:s.logs,calib:{pxPerMm:s.calib.pxPerMm,distCm:s.calib.distCm,distMethod:s.calib.distMethod,ppd:s.calib.ppd,scaleA:s.calib.scaleA},
+    scale:s.scale,flags:s.flags,taskA:{trials:s.taskA.trials.map(t=>[t.k,t.g,t.rep,t.ratio])},
+    taskB:{ran:s.taskB.ran,trials:s.taskB.trials.map(t=>[t.E,t.cond==='ind'?1:0,t.c,t.cmpBigger])}};
+  return 'EBB1.'+b64enc(JSON.stringify(c));
+}
+function expandCode(str){
+  const t=str.trim(); if(!t.startsWith('EBB1.')) throw new Error('형식');
+  const c=JSON.parse(b64dec(t.slice(5)));
+  c.taskA={trials:(c.taskA?.trials||[]).map(a=>({k:a[0],g:a[1],rep:a[2],ratio:a[3]}))};
+  c.taskB={ran:c.taskB?.ran,trials:(c.taskB?.trials||[]).map(a=>({E:a[0],cond:a[1]?'ind':'ctl',c:a[2],cmpBigger:a[3]}))};
+  c.imported=true; c.summary=summarize(c); return c;
+}
+function renderResult(){
+  const sm=S.summary; const b=$('resultBody');
+  const cells = (S.mode==='quick') ? '' : `<div class="tablewrap">${heatTable((k,g)=>{const v=sm.a.cond[k+'|'+g]; return v==null?null:{v,n:null};})}</div>`;
+  let html = `<div class="grid3">
+    <div class="stat"><b>${sgn(sm.a.expand)}%</b><span>작은 원에 둘러싸였을 때 (확대 착시)</span></div>
+    <div class="stat"><b>${sgn(sm.a.shrink)}%</b><span>큰 원에 둘러싸였을 때 (축소 착시)</span></div>
+    <div class="stat"><b>${fmt(sm.a.total)}%p</b><span>총 착시 폭</span></div>
+  </div>${cells}`;
+  if(sm.b.E2||sm.b.E5) html += `<p class="small">주변 시야 과제: 2° 위치 ${sgn(sm.b.E2?.illusion)}%, 5° 위치 ${sgn(sm.b.E5?.illusion)}% (시야 중심에서 멀어질수록 V1에 할당된 면적이 줄어 착시가 달라지는지 보는 값)</p>`;
+  if(sm.selfShort!=null) html += `<p class="small">숏폼 시간: 내가 적은 값 <b class="mono">${fmt(sm.selfShort,0)}분</b>${sm.loggedShort!=null?` · 기록된 값(인스타+틱톡+유튜브${S.logs.shortsPct!=null?' 쇼츠 비율 반영':''}) <b class="mono">${fmt(sm.loggedShort,0)}분</b>`:' · 기록 없음'}</p>`;
+  if(S.scale){
+    const cat=S.scale.cat;
+    html += `<p class="small">사용 습관 점수 <b class="mono">${S.scale.total}</b> / 40 · ${cat==='일반'?'일반 사용자군 범위':cat==='잠재적위험'?'잠재적 위험군 범위':'고위험군 범위'}</p>`;
+    if(cat!=='일반') html += `<div class="note warn small">이 점수는 진단이 아니라 스스로 점검하는 지표입니다. 사용 습관을 함께 이야기해 보고 싶다면 스마트쉼센터(www.iapc.or.kr)의 무료 상담을 이용할 수 있습니다.</div>`;
+  }
+  if(S.flags.length) html += `<p class="small muted">측정 메모: ${S.flags.map(esc).join(' · ')}</p>`;
+  b.innerHTML = html;
+  $('resultCode').value = compactCode(S);
+}
+$('btnCopyCode').addEventListener('click',async()=>{ const t=$('resultCode'); try{ await navigator.clipboard.writeText(t.value); $('btnCopyCode').textContent='복사했습니다'; }catch(e){ t.focus(); t.select(); $('btnCopyCode').textContent='선택됨: 길게 눌러 복사'; } });
+$('btnAgain').addEventListener('click',()=>{
+  document.querySelectorAll('#runView input[type=text],#runView input[type=number]').forEach(i=>{ if(i.id!=='distManual') i.value=''; });
+  document.querySelectorAll('#runView input[type=radio],#runView input[type=checkbox]').forEach(i=>i.checked=false);
+  $('logFields').querySelectorAll('input').forEach(i=>i.disabled=false);
+  ['pGrade','pSex','pVision','pDevice','lOS','lNight'].forEach(id=>$(id).value='');
+  $('pMode').value='full'; $('pPhase').value='single'; $('pCond').value='none';
+  $('btnStart').disabled=true; $('btnDist').disabled=true; $('btnBlindGo').textContent='측정 시작'; $('btnCopyCode').textContent='코드 복사';
+  show('consent'); drawPreview();
+});
+
+/* ===== 표·차트 ===== */
+function heatColor(v){ if(v==null) return 'transparent'; const a=Math.min(1,Math.abs(v)/25)*0.55+0.08; return `color-mix(in srgb, ${v>=0?'var(--pos)':'var(--neg)'} ${Math.round(a*100)}%, transparent)`; }
+function heatTable(get){
+  let h = `<table class="heat"><thead><tr><th>유도원 크기 k \\ 간격 g</th>${GS.map(g=>`<th>${g}°<br><small class="mono">피질 ${fmt(cortGap(RT,g),2)} mm</small></th>`).join('')}</tr></thead><tbody>`;
+  KS.forEach(k=>{ h+=`<tr><th>${k}×<br><small class="mono">r=${fmt(k*RT,2)}°</small></th>`+GS.map(g=>{ const o=get(k,g); return `<td style="background:${heatColor(o?.v)}">${o?sgn(o.v)+'%':'–'}${o&&o.n!=null?`<small>±${fmt(o.sd)} · n=${o.n}</small>`:''}</td>`; }).join('')+'</tr>'; });
+  return h+'</tbody></table>';
+}
+function scatter(pts,{xl,yl,identity=false,w=520,h=320}){
+  if(pts.length<2) return `<p class="small muted">점이 2개 이상 모이면 그래프가 나타납니다.</p>`;
+  const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+  let x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys);
+  if(identity){ x0=y0=Math.min(x0,y0,0); x1=y1=Math.max(x1,y1); }
+  const padX=(x1-x0)*0.08||1, padY=(y1-y0)*0.08||1; x0-=padX; x1+=padX; y0-=padY; y1+=padY;
+  const L=52,R=14,T=12,Bm=40, pw=w-L-R, ph=h-T-Bm;
+  const X=v=>L+(v-x0)/(x1-x0)*pw, Y=v=>T+ph-(v-y0)/(y1-y0)*ph;
+  const ticks=(a,b)=>{ const n=4; return Array.from({length:n+1},(_,i)=>a+(b-a)*i/n); };
+  let s=`<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(yl)} 대 ${esc(xl)} 산점도">`;
+  ticks(y0,y1).forEach(v=>{ s+=`<line x1="${L}" x2="${w-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${fmt(v,0)}</text>`; });
+  ticks(x0,x1).forEach(v=>{ s+=`<text x="${X(v)}" y="${h-Bm+16}" text-anchor="middle">${fmt(v,0)}</text>`; });
+  if(identity) s+=`<line x1="${X(x0)}" y1="${Y(x0)}" x2="${X(x1)}" y2="${Y(x1)}" stroke="var(--muted)" stroke-dasharray="4 4" stroke-width="1"/>`;
+  pts.forEach(p=>{ s+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="4" fill="var(--accent)" fill-opacity="0.75"/>`; });
+  s+=`<text x="${L+pw/2}" y="${h-6}" text-anchor="middle">${esc(xl)}</text><text x="12" y="${T+ph/2}" text-anchor="middle" transform="rotate(-90 12 ${T+ph/2})">${esc(yl)}</text></svg>`;
+  return s;
+}
+function pearson(x,y){ const n=x.length; if(n<3) return null; const mx=mean(x),my=mean(y); let a=0,b=0,c=0; for(let i=0;i<n;i++){a+=(x[i]-mx)*(y[i]-my);b+=(x[i]-mx)**2;c+=(y[i]-my)**2;} return (b&&c)?a/Math.sqrt(b*c):null; }
+function ranks(a){ const idx=a.map((v,i)=>[v,i]).sort((p,q)=>p[0]-q[0]); const r=new Array(a.length); let i=0; while(i<idx.length){ let j=i; while(j+1<idx.length&&idx[j+1][0]===idx[i][0]) j++; const avg=(i+j)/2+1; for(let k=i;k<=j;k++) r[idx[k][1]]=avg; i=j+1; } return r; }
+const spearman=(x,y)=>pearson(ranks(x),ranks(y));
+function corrLine(name,x,y){ const n=x.length; if(n<5) return `<li>${name}: n=${n} (5명 이상 필요)</li>`; const rs=spearman(x,y); const t = rs*Math.sqrt((n-2)/Math.max(1e-9,1-rs*rs)); return `<li>${name}: Spearman ρ = <span class="mono">${fmt(rs,2)}</span>, n=${n}, t(${n-2}) ≈ ${fmt(t,2)} ${Math.abs(t)>2.0?'(대략 p<.05 수준)':''}</li>`; }
+function ols(X,y){ // X: rows with leading 1
+  const p=X[0].length, n=X.length; if(n<=p) return null;
+  const A=Array.from({length:p},()=>new Array(p+1).fill(0));
+  for(let i=0;i<n;i++) for(let a=0;a<p;a++){ for(let b=0;b<p;b++) A[a][b]+=X[i][a]*X[i][b]; A[a][p]+=X[i][a]*y[i]; }
+  for(let c=0;c<p;c++){ let m=c; for(let r=c+1;r<p;r++) if(Math.abs(A[r][c])>Math.abs(A[m][c])) m=r; [A[c],A[m]]=[A[m],A[c]]; if(Math.abs(A[c][c])<1e-12) return null; for(let r=0;r<p;r++){ if(r===c) continue; const f=A[r][c]/A[c][c]; for(let k=c;k<=p;k++) A[r][k]-=f*A[c][k]; } }
+  const beta=A.map((row,i)=>row[p]/row[i]); const my=mean(y); let ssr=0,sst=0;
+  for(let i=0;i<n;i++){ const yh=X[i].reduce((s,x,j)=>s+x*beta[j],0); ssr+=(y[i]-yh)**2; sst+=(y[i]-my)**2; }
+  const r2=1-ssr/sst; return {beta,r2,adj:1-(1-r2)*(n-1)/(n-p),n};
+}
+
+/* ===== 연구자 화면 ===== */
+function filtered(){
+  const f=$('rFilter').value, q=$('rQuality').checked;
+  return allSessions().map(s=>{ const sm=s.summary||summarize(s); return {s, sm, flags:qualityFlags(s,sm)}; })
+    .filter(o=>(f==='all'||o.s.phase===f) && (!q || !o.flags.some(x=>/보정|이탈|시청거리|맹점|축소/.test(x))));
+}
+function renderResearch(){
+  if(!canResearch){ ['rStats','rHeat','rModel','rEcc','rScatter1','rDisc','rScatter2','rCorr','rPrePost','rList'].forEach(id=>$(id).innerHTML=''); return; }
+  const all=allSessions(); const rows=filtered();
+  const people=new Set(all.map(s=>s.code));
+  $('rStats').innerHTML = `
+    <div class="stat"><b>${all.length}</b><span>전체 세션</span></div>
+    <div class="stat"><b>${people.size}</b><span>참여자 코드 수</span></div>
+    <div class="stat"><b>${rows.length}</b><span>현재 분석 대상</span></div>
+    <div class="stat"><b>${all.filter(s=>s.logs?.available).length}</b><span>실제 기록 입력</span></div>`;
+  if(!all.length){
+    const empty='<p class="small muted">아직 기록이 없습니다. ‘참여하기’ 화면에서 첫 측정을 마치면 여기에 표와 그래프가 채워집니다.</p>';
+    ['rHeat','rEcc','rScatter1','rScatter2','rPrePost','rList'].forEach(id=>$(id).innerHTML=empty); ['rModel','rDisc','rCorr'].forEach(id=>$(id).innerHTML=''); return;
+  }
+  // 탐구 1: heat + 모형
+  const full=rows.filter(o=>o.s.mode!=='quick');
+  const cell=(k,g)=>{ const v=full.map(o=>o.sm.a.cond[k+'|'+g]).filter(x=>x!=null); return v.length?{v:mean(v),sd:sd(v),n:v.length}:null; };
+  $('rHeat').innerHTML = heatTable(cell);
+  const X1=[],X2=[],Y=[];
+  full.forEach(o=>KS.forEach(k=>GS.forEach(g=>{ const v=o.sm.a.cond[k+'|'+g]; if(v==null) return; const lk=Math.log(k), cg=cortGap(RT,g); X1.push([1,lk,g,lk*g]); X2.push([1,lk,cg,lk*cg]); Y.push(v); })));
+  const m1=ols(X1,Y), m2=ols(X2,Y);
+  $('rModel').innerHTML = (m1&&m2) ? `<ul class="plain">
+    <li>망막 거리 모형: 착시 = ${fmt(m1.beta[0],2)} ${sgn(m1.beta[1],2)}·ln k ${sgn(m1.beta[2],2)}·g ${sgn(m1.beta[3],2)}·(ln k·g) &nbsp; R² = <span class="mono">${fmt(m1.r2,3)}</span>, 수정 R² = ${fmt(m1.adj,3)} (관측 ${m1.n})</li>
+    <li>피질 거리 모형: 착시 = ${fmt(m2.beta[0],2)} ${sgn(m2.beta[1],2)}·ln k ${sgn(m2.beta[2],2)}·Δx ${sgn(m2.beta[3],2)}·(ln k·Δx) &nbsp; R² = <span class="mono">${fmt(m2.r2,3)}</span>, 수정 R² = ${fmt(m2.adj,3)}</li>
+    <li class="muted">Δx = 17.3·ln((E+g+0.75)/(E+0.75)) mm, E = 표적 반지름 0.6°. ln k의 계수가 음수이면 ‘유도원이 클수록 축소’가 확인된 것입니다.</li></ul>` : '<p class="muted">과제 A 전체 측정 세션이 2개 이상 쌓이면 회귀 모형이 계산됩니다.</p>';
+  // 탐구 1-2: 이심률
+  const eccRows=rows.filter(o=>o.sm.b.E2&&o.sm.b.E5);
+  if(eccRows.length){
+    const d=eccRows.map(o=>o.sm.b.E5.illusion-o.sm.b.E2.illusion); const md=mean(d), s=sd(d); const t = s? md/(s/Math.sqrt(d.length)):null;
+    $('rEcc').innerHTML = `<div class="grid3">
+      <div class="stat"><b>${sgn(mean(eccRows.map(o=>o.sm.b.E2.illusion)))}%</b><span>2° 평균 착시 (n=${eccRows.length})</span></div>
+      <div class="stat"><b>${sgn(mean(eccRows.map(o=>o.sm.b.E5.illusion)))}%</b><span>5° 평균 착시</span></div>
+      <div class="stat"><b>${sgn(md)}%p</b><span>개인별 차이(5°−2°) 평균${t!=null?`, 대응 t(${d.length-1}) ≈ ${fmt(t,2)}`:''}</span></div></div>
+      <p class="muted" style="margin-top:8px">망막에서는 같은 배치(유도원 0.4×, 간격 ${B_G}°)여도 V1 위의 간격은 다릅니다. 표적 바깥 가장자리 기준 피질 간격은 2°에서 ${fmt(cortGap(2+RT,B_G),2)} mm, 5°에서 ${fmt(cortGap(5+RT,B_G),2)} mm입니다(M(E)=17.3/(E+0.75) 적분). 피질 거리가 짧을수록 표적과 유도원의 상호작용이 강해진다는 가설은 5°의 착시가 더 크다고 예측합니다.</p>`;
+  } else $('rEcc').innerHTML='<p class="muted">과제 B까지 마친 세션이 아직 없습니다.</p>';
+  // 탐구 2
+  const lg=rows.filter(o=>o.sm.loggedShort!=null && o.sm.selfShort!=null);
+  $('rScatter1').innerHTML = scatter(lg.map(o=>[o.sm.loggedShort,o.sm.selfShort]),{xl:'기록된 숏폼 시간(분/일)',yl:'자기보고 숏폼 시간(분/일)',identity:true});
+  if(lg.length>=3){
+    const diff=lg.map(o=>o.sm.diffMin); const bias=mean(diff), s=sd(diff);
+    const mis = lg.filter(o=>o.sm.selfGroup!==o.sm.logGroup).length;
+    const r=pearson(lg.map(o=>o.sm.loggedShort),lg.map(o=>o.sm.selfShort));
+    const over=lg.filter(o=>o.sm.diffMin>0).length;
+    $('rDisc').innerHTML = `<ul class="plain">
+      <li>n = ${lg.length}, Pearson r = <span class="mono">${fmt(r,2)}</span> (Parry 등 2021 메타분석의 평균 r ≈ 0.38과 비교)</li>
+      <li>평균 차이(자기보고 − 기록) = <span class="mono">${sgn(bias)}</span>분, 95% 일치한계 ${fmt(bias-1.96*(s||0))} ~ ${fmt(bias+1.96*(s||0))}분</li>
+      <li>과대보고 ${over}명 · 과소보고 ${lg.length-over}명</li>
+      <li>저·중·고 소비 집단이 바뀌는 비율: <span class="mono">${fmt(mis/lg.length*100,0)}%</span> (${mis}/${lg.length})</li>
+      <li class="muted">점선은 자기보고 = 기록. 점선 위쪽은 실제보다 많게, 아래쪽은 적게 말한 것입니다.</li></ul>`;
+  } else $('rDisc').innerHTML='<p class="muted">자기보고와 실제 기록이 모두 있는 세션이 3개 이상 필요합니다.</p>';
+  // 탐구 2-3: 상관
+  const sc=rows.filter(o=>o.s.scale && o.sm.disc!=null);
+  $('rScatter2').innerHTML = scatter(sc.map(o=>[o.s.scale.total,Math.abs(o.sm.disc)]),{xl:'과의존 척도 총점',yl:'|log₂(자기보고/기록)|'});
+  const pick=(arr,fx,fy)=>{ const v=arr.filter(o=>fx(o)!=null&&fy(o)!=null); return [v.map(fx),v.map(fy)]; };
+  const L=[];
+  L.push(corrLine('과의존 총점 × |불일치|',...pick(rows,o=>o.s.scale?.total??null,o=>o.sm.disc==null?null:Math.abs(o.sm.disc))));
+  L.push(corrLine('조절실패 하위점수 × 불일치(부호 포함)',...pick(rows,o=>o.s.scale?.sub.ctrl??null,o=>o.sm.disc)));
+  L.push(corrLine('기록된 숏폼 시간 × 확대 착시',...pick(rows,o=>o.sm.loggedShort,o=>o.sm.a.expand)));
+  L.push(corrLine('자기보고 숏폼 시간 × 확대 착시',...pick(rows,o=>o.sm.selfShort,o=>o.sm.a.expand)));
+  L.push(corrLine('기록된 게임 시간 × 총 착시 폭',...pick(rows,o=>o.s.logs?.available?o.s.logs.games:null,o=>o.sm.a.total)));
+  L.push(corrLine('과의존 총점 × 총 착시 폭',...pick(rows,o=>o.s.scale?.total??null,o=>o.sm.a.total)));
+  L.push(corrLine('어젯밤 수면 × 총 착시 폭',...pick(rows,o=>o.s.self?.sleepH??null,o=>o.sm.a.total)));
+  $('rCorr').innerHTML = `<ul class="plain">${L.join('')}</ul><p class="muted" style="margin-top:8px">여러 상관을 한꺼번에 보면 우연히 유의해 보이는 값이 나옵니다. 보고서에는 계획서에서 미리 정한 가설만 검정하고 나머지는 탐색 결과로 표시하세요.</p>`;
+  // 탐구 3: 사전–사후
+  const byKey={};
+  rows.forEach(o=>{ if(o.s.phase==='pre'||o.s.phase==='post'){ const key=o.s.code+'|'+o.s.condition; (byKey[key]=byKey[key]||{})[o.s.phase]=o; } });
+  const pairs=Object.entries(byKey).filter(([,v])=>v.pre&&v.post).map(([k,v])=>({cond:k.split('|')[1], d:(v.post.sm.a.total??NaN)-(v.pre.sm.a.total??NaN), de:(v.post.sm.a.expand??NaN)-(v.pre.sm.a.expand??NaN)})).filter(p=>Number.isFinite(p.d));
+  if(pairs.length){
+    const names={shortform:'숏폼 시청',game:'모바일 게임',reading:'종이책 읽기',nature:'자연 영상',none:'미지정'};
+    const conds=[...new Set(pairs.map(p=>p.cond))];
+    $('rPrePost').innerHTML = `<div class="tablewrap"><table class="data"><thead><tr><th>직전 활동</th><th>쌍(n)</th><th>총 착시 폭 변화 평균</th><th>SD</th><th>대응 t</th><th>확대 착시 변화 평균</th></tr></thead><tbody>`+
+      conds.map(c=>{ const p=pairs.filter(x=>x.cond===c), d=p.map(x=>x.d), s=sd(d), t=s?mean(d)/(s/Math.sqrt(d.length)):null; return `<tr><td>${names[c]||esc(c)}</td><td class="num">${p.length}</td><td class="num">${sgn(mean(d))}%p</td><td class="num">${fmt(s)}</td><td class="num">${t==null?'–':fmt(t,2)}</td><td class="num">${sgn(mean(p.map(x=>x.de)))}%p</td></tr>`; }).join('')+
+      `</tbody></table></div><p class="muted" style="margin-top:8px">같은 참여자 코드·같은 활동의 사전·사후 세션을 짝지었습니다. 숏폼과 대조 활동의 변화량 차이가 ‘상태(state) 효과’의 증거이고, 차이가 없으면 착시는 비교적 안정적인 특성(trait)이라는 해석을 지지합니다.</p>`;
+  } else $('rPrePost').innerHTML='<p class="muted">같은 참여자 코드로 사전·사후 측정을 모두 마친 쌍이 아직 없습니다. 참여 화면의 ‘측정 회차’에서 사전/사후를 고르세요.</p>';
+  // 목록
+  $('rList').innerHTML = `<table class="data"><thead><tr><th>일시</th><th>코드</th><th>학년</th><th>회차</th><th>활동</th><th>방식</th><th>거리(cm)</th><th>확대%</th><th>축소%</th><th>자기보고</th><th>기록</th><th>척도</th><th>메모</th><th></th></tr></thead><tbody>`+
+    allSessions().slice().reverse().map(s=>{ const sm=s.summary||summarize(s); const fl=qualityFlags(s,sm); return `<tr><td>${esc(String(s.createdAt).slice(0,16).replace('T',' '))}</td><td>${esc(s.code)}</td><td>${esc(s.grade)}</td><td>${esc(s.phase)}</td><td>${esc(s.condition)}</td><td>${esc(s.mode)}</td><td class="num">${fmt(s.calib?.distCm)}</td><td class="num">${sgn(sm.a.expand)}</td><td class="num">${sgn(sm.a.shrink)}</td><td class="num">${fmt(sm.selfShort,0)}</td><td class="num">${fmt(sm.loggedShort,0)}</td><td class="num">${s.scale?.total??'–'}</td><td>${fl.length?`<span class="pill warn">${esc(fl.join(', '))}</span>`:'<span class="pill ok">양호</span>'}</td><td><button class="btn ghost small" data-del="${esc(s.id)}">삭제</button></td></tr>`; }).join('')+'</tbody></table>';
+}
+$('rList').addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-del]'); if(!b) return;
+  if(b.dataset.armed!=='1'){ b.dataset.armed='1'; b.textContent='한 번 더 누르면 삭제'; b.classList.add('danger'); return; }
+  const id=b.dataset.del; saveLocal(loadLocal().filter(d=>d.id!==id));
+  if(DB){ try{ await DB.collection('sessions').doc(id).delete(); }catch(err){ $('exMsg').textContent='공유 저장소에서 삭제하지 못했습니다('+(err.code||'오류')+'). 편집 권한을 확인하세요.'; } }
+  remote = remote.filter(d=>d.id!==id); renderResearch();
+});
+$('rFilter').addEventListener('change',renderResearch);
+$('rQuality').addEventListener('change',renderResearch);
+
+/* ===== 내보내기 ===== */
+function csv(rows){ return '﻿'+rows.map(r=>r.map(v=>{ const s=v==null?'':String(v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }).join(',')).join('\n'); }
+function sessionsCSV(){
+  const H=['id','createdAt','code','grade','sex','vision','device','mode','phase','condition','distCm','distMethod','pxPerMm','ppd','scaleA','self_short','self_game','self_phone','self_sleepH','self_recentMin','self_focus','log_available','log_total','log_insta','log_youtube','log_tiktok','log_games','log_shortsPct','log_os','nightMode','logged_short','disc_log2','diff_min','self_group','log_group','scale_total','scale_ctrl','scale_sal','scale_cons','scale_cat','A_control_ratio',...KS.flatMap(k=>GS.map(g=>`A_k${k}_g${g}`)),'A_expand','A_shrink','A_total','A_distEffect','B_E2','B_E5','flags'];
+  const rows=[H];
+  allSessions().forEach(s=>{ const sm=s.summary||summarize(s); const L=s.logs||{}, F=s.self||{}, C=s.calib||{}, Q=s.scale||{};
+    rows.push([s.id,s.createdAt,s.code,s.grade,s.sex,s.vision,s.device,s.mode,s.phase,s.condition,C.distCm,C.distMethod,C.pxPerMm&&C.pxPerMm.toFixed(4),C.ppd,C.scaleA,F.shortMin,F.gameMin,F.phoneMin,F.sleepH,F.recentMin,F.focus,L.available?1:0,L.total,L.insta,L.youtube,L.tiktok,L.games,L.shortsPct,L.os,L.nightMode,sm.loggedShort,sm.disc&&sm.disc.toFixed(3),sm.diffMin,sm.selfGroup,sm.logGroup,Q.total,Q.sub?.ctrl,Q.sub?.sal,Q.sub?.cons,Q.cat,sm.a.control&&sm.a.control.toFixed(4),...KS.flatMap(k=>GS.map(g=>{const v=sm.a.cond[k+'|'+g]; return v==null?'':v.toFixed(2);})),fmt(sm.a.expand,2),fmt(sm.a.shrink,2),fmt(sm.a.total,2),fmt(sm.a.distanceEffect,2),fmt(sm.b.E2?.illusion,2),fmt(sm.b.E5?.illusion,2),qualityFlags(s,sm).join('; ')]); });
+  return csv(rows);
+}
+function trialsA(){ const rows=[['session','code','phase','condition','k','g','cortGap_mm','rep','side','start','ratio','rt_ms','adjust_n']]; allSessions().forEach(s=>(s.taskA?.trials||[]).forEach(t=>rows.push([s.id,s.code,s.phase,s.condition,t.k,t.g,t.k>0?cortGap(RT,t.g).toFixed(3):'',t.rep,t.side,t.start,t.ratio,t.rt,t.adj]))); return csv(rows); }
+function trialsB(){ const rows=[['session','code','phase','condition','ecc_deg','stim','start_c','comp_ratio','cmpBigger','dur_ms','rt_ms']]; allSessions().forEach(s=>(s.taskB?.trials||[]).forEach(t=>rows.push([s.id,s.code,s.phase,s.condition,t.E,t.cond,t.c0,t.c,t.cmpBigger,t.dur,t.rt]))); return csv(rows); }
+let DL=null;
+async function offer(filename,data){
+  if(DL===null && window.claude?.use){ try{ DL = await window.claude.use('downloads'); }catch(e){ DL=undefined; } }
+  if(DL){ try{ const r=await DL.save({filename,data}); $('exMsg').textContent = r.status==='saved'?`${filename} 저장을 요청했습니다.`:`${filename}을(를) 전달했습니다.`; $('exOut').hidden=true; return; }catch(e){ if(e&&e.code==='declined'){ $('exMsg').textContent='저장을 취소했습니다.'; return; } } }
+  if(!window.claude){
+    try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([data],{type:filename.endsWith('.json')?'application/json':'text/csv;charset=utf-8'})); a.download=filename; document.body.appendChild(a); a.click(); a.remove(); $('exMsg').textContent=`${filename}을(를) 내려받았습니다.`; return; }catch(e){}
+  }
+  $('exOut').hidden=false; $('exOut').value=data.replace(/^﻿/,''); $('exOut').focus(); $('exOut').select();
+  $('exMsg').textContent='이 화면에서는 파일 저장이 막혀 있어 내용을 아래에 표시했습니다. 전체 선택해 복사한 뒤 메모장에 붙여 넣고 .csv로 저장하세요.';
+}
+const stamp=()=>new Date().toISOString().slice(0,10);
+$('exSessions').addEventListener('click',()=>offer(`착시실험_세션요약_${stamp()}.csv`,sessionsCSV()));
+$('exA').addEventListener('click',()=>offer(`착시실험_과제A_${stamp()}.csv`,trialsA()));
+$('exB').addEventListener('click',()=>offer(`착시실험_과제B_${stamp()}.csv`,trialsB()));
+$('exJson').addEventListener('click',()=>offer(`착시실험_전체_${stamp()}.json`,JSON.stringify(allSessions(),null,1)));
+$('btnImport').addEventListener('click',async()=>{
+  const lines=$('imIn').value.split(/\s+/).filter(Boolean); let ok=0, bad=0, up=0;
+  for(const l of lines){ try{ const s=expandCode(l); addLocal(s); ok++; if(DB){ try{ await DB.collection('sessions').doc(s.id).set(JSON.parse(JSON.stringify(s))); up++; }catch(e){} } }catch(e){ bad++; } }
+  $('imMsg').textContent = `가져옴 ${ok}건${DB?` (공유 저장소 ${up}건)`:''}${bad?`, 읽지 못함 ${bad}건`:''}`; $('imIn').value=''; renderResearch();
+});
+
+/* ===== 구글 시트 불러오기 ===== */
+if(!SHEET_URL) $('sheetRow').hidden=true;
+$('btnSheet').addEventListener('click',async()=>{
+  const k=$('sheetKey').value.trim(); if(!k){ $('sheetMsg').textContent='키를 입력하세요.'; return; }
+  $('sheetMsg').textContent='불러오는 중…';
+  try{
+    const r=await fetch(SHEET_URL+'?key='+encodeURIComponent(k)); const arr=await r.json();
+    if(!Array.isArray(arr)){ $('sheetMsg').textContent='키가 맞지 않습니다.'; return; }
+    const m=new Map(remote.map(d=>[d.id,d])); arr.forEach(d=>{ if(d&&d.id) m.set(d.id,d); }); remote=[...m.values()];
+    $('sheetMsg').textContent=`${arr.length}건을 불러왔습니다.`; renderResearch();
+  }catch(e){ $('sheetMsg').textContent='불러오지 못했습니다. 웹 앱 주소와 배포 설정(액세스: 모든 사용자)을 확인하세요.'; }
+});
+
+/* ===== 탭 ===== */
+function tab(which){
+  $('tabRun').setAttribute('aria-pressed',String(which==='run')); $('tabRes').setAttribute('aria-pressed',String(which==='res'));
+  $('runView').hidden = which!=='run'; $('resView').hidden = which!=='res';
+  if(which==='res') renderResearch(); else if(current==='consent') drawPreview();
+}
+$('tabRun').addEventListener('click',()=>tab('run'));
+$('tabRes').addEventListener('click',()=>tab('res'));
+if(location.hash==='#research') tab('res');
+
+buildLikert(); show('consent'); drawPreview(); setSource(); initCaps();
+window.addEventListener('resize',()=>{ if(current==='consent') drawPreview(); if(current==='card') sizeCard(); });
+window.__ebb = {summarize, logisticPSE, cortGap, ols, spearman, expandCode, compactCode};
+})();
+</script>
+
+</body>
+</html>
